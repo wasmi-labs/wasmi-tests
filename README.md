@@ -1,6 +1,9 @@
 # Wasmi specific Wast Tests
 
-This repo contains some Wast tests from the official Wasm spec testsuite that have been modified to work with Wasmi.
+This repo contains two sets of Wast (`.wast`) tests:
+
+1. Wasmi specific Wast tests, found under the `tests` folder.
+2. Wast tests from the official Wasm spec testsuite that have been modified to work with Wasmi.
 
 In particular this repository contains the following subsets of the official Wasm spec testsuite:
 
