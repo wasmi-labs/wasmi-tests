@@ -117,3 +117,134 @@
 (assert_return (invoke "if.preserve-locals" (i32.const 1) (i32.const -1)) (i32.const -1))
 (assert_return (invoke "if.preserve-locals" (i32.const 1) (i32.const 42)) (i32.const 042))
 (assert_return (invoke "if.preserve-locals" (i32.const 1) (i32.const 999)) (i32.const 999))
+
+(module
+    (func (export "block.nested") (param i32 i32) (param $c0 i32) (param $c1 i32) (result i32 i32)
+        (local.get 0) ;; 1st return value
+        (local.get 1) ;; 2nd return value
+        (block
+            (br_if 0 (local.get $c0))
+            (local.set 0 (i32.const 10)) ;; conditionally overwrites (local 0) on stack
+            (block
+                (br_if 1 (local.get $c1))
+                (local.set 1 (i32.const 20)) ;; conditionally overwrites (local 1) on stack
+            )
+        )
+    )
+)
+(assert_return
+    (invoke "block.nested" (i32.const 10) (i32.const 20) (i32.const 0) (i32.const 0))
+    (i32.const 10) (i32.const 20)
+)
+(assert_return
+    (invoke "block.nested" (i32.const 10) (i32.const 20) (i32.const 0) (i32.const 1))
+    (i32.const 10) (i32.const 20)
+)
+(assert_return
+    (invoke "block.nested" (i32.const 10) (i32.const 20) (i32.const 1) (i32.const 0))
+    (i32.const 10) (i32.const 20)
+)
+(assert_return
+    (invoke "block.nested" (i32.const 10) (i32.const 20) (i32.const 1) (i32.const 1))
+    (i32.const 10) (i32.const 20)
+)
+
+(module
+    (func (export "if.nested") (param i32 i32) (param $c0 i32) (param $c1 i32) (result i32 i32)
+        local.get 0 ;; 1st return value
+        local.get 1 ;; 2nd return value
+        (if (local.get $c0)
+            (then
+                (local.set 0 (i32.const 10)) ;; overwrites (local 0) conditionally
+                (if (local.get $c1)
+                    (then
+                        (local.set 1 (i32.const 20)) ;; overwrites (local 1) conditionally
+                    )
+                )
+            )
+        )
+    )
+)
+(assert_return
+    (invoke "if.nested" (i32.const 10) (i32.const 20) (i32.const 0) (i32.const 0))
+    (i32.const 10) (i32.const 20)
+)
+(assert_return
+    (invoke "if.nested" (i32.const 10) (i32.const 20) (i32.const 0) (i32.const 1))
+    (i32.const 10) (i32.const 20)
+)
+(assert_return
+    (invoke "if.nested" (i32.const 10) (i32.const 20) (i32.const 1) (i32.const 0))
+    (i32.const 10) (i32.const 20)
+)
+(assert_return
+    (invoke "if.nested" (i32.const 10) (i32.const 20) (i32.const 1) (i32.const 1))
+    (i32.const 10) (i32.const 20)
+)
+
+(module
+    (func (export "expr.block.rhs") (param $cond i32) (param $x i32) (param $y0 i32) (param $y1 i32) (result i32)
+        (i32.add
+            (local.get $x)
+            (block $exit (result i32)
+                (drop
+                    (br_if $exit
+                        (local.get $y0) ;; br_if return value
+                        (i32.eqz (local.get $cond)) ;; br_if condition
+                    )
+                )
+                (local.set $x (i32.const 0x7FFF_FFFF)) ;; x = i32::MAX
+                (local.get $y1)
+            )
+        )
+    )
+)
+(assert_return
+    (invoke "expr.block.rhs" (i32.const 0) (i32.const 3) (i32.const 5) (i32.const 7))
+    (i32.const 8)
+)
+(assert_return
+    (invoke "expr.block.rhs" (i32.const 0) (i32.const 5) (i32.const 7) (i32.const 11))
+    (i32.const 12)
+)
+(assert_return
+    (invoke "expr.block.rhs" (i32.const 1) (i32.const 3) (i32.const 5) (i32.const 7))
+    (i32.const 10)
+)
+(assert_return
+    (invoke "expr.block.rhs" (i32.const 1) (i32.const 5) (i32.const 7) (i32.const 11))
+    (i32.const 16)
+)
+
+(module
+    (func (export "expr.if.rhs") (param $cond i32) (param $x i32) (param $y0 i32) (param $y1 i32) (result i32)
+        (i32.add
+            (local.get $x)
+            (if (result i32) (i32.eqz (local.get $cond))
+                (then
+                    (local.set $x (i32.const 0x7FFF_FFFF)) ;; x = i32::MAX
+                    (local.get $y0)
+                )
+                (else
+                    (local.get $y1)
+                )
+            )
+        )
+    )
+)
+(assert_return
+    (invoke "expr.if.rhs" (i32.const 0) (i32.const 3) (i32.const 5) (i32.const 7))
+    (i32.const 8)
+)
+(assert_return
+    (invoke "expr.if.rhs" (i32.const 0) (i32.const 5) (i32.const 7) (i32.const 11))
+    (i32.const 12)
+)
+(assert_return
+    (invoke "expr.if.rhs" (i32.const 1) (i32.const 3) (i32.const 5) (i32.const 7))
+    (i32.const 10)
+)
+(assert_return
+    (invoke "expr.if.rhs" (i32.const 1) (i32.const 5) (i32.const 7) (i32.const 11))
+    (i32.const 16)
+)
