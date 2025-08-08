@@ -249,3 +249,77 @@
     (invoke "invalid.fuse.f64.nan" (f64.const -nan:0xfffffffffffff))
     (i32.const 1)
 )
+
+;; Double Negate
+
+(module
+    (func (export "base.double.negation") (param i32) (result i32)
+        (local.get 0)
+        (i32.eqz)
+        (i32.eqz)
+    )
+)
+(assert_return
+    (invoke "base.double.negation" (i32.const 0))
+    (i32.const 0)
+)
+(assert_return
+    (invoke "base.double.negation" (i32.const 1))
+    (i32.const 1)
+)
+
+;; Double Negate: i32.lt_s
+
+(module
+    (func (export "i32.slt.double.negation") (param i32 i32) (result i32)
+        (local.get 0)
+        (local.get 1)
+        (i32.lt_s)
+        (i32.eqz)
+        (i32.eqz)
+    )
+)
+(assert_return
+    (invoke "i32.slt.double.negation" (i32.const 0) (i32.const 0))
+    (i32.const 0)
+)
+(assert_return
+    (invoke "i32.slt.double.negation" (i32.const 0) (i32.const 1))
+    (i32.const 1)
+)
+(assert_return
+    (invoke "i32.slt.double.negation" (i32.const 1) (i32.const 0))
+    (i32.const 0)
+)
+(assert_return
+    (invoke "i32.slt.double.negation" (i32.const 1) (i32.const 1))
+    (i32.const 0)
+)
+
+;; Double Negate: i32.le_s
+
+(module
+    (func (export "i32.sle.double.negation") (param i32 i32) (result i32)
+        (local.get 0)
+        (local.get 1)
+        (i32.le_s)
+        (i32.eqz)
+        (i32.eqz)
+    )
+)
+(assert_return
+    (invoke "i32.sle.double.negation" (i32.const 0) (i32.const 0))
+    (i32.const 1)
+)
+(assert_return
+    (invoke "i32.sle.double.negation" (i32.const 0) (i32.const 1))
+    (i32.const 1)
+)
+(assert_return
+    (invoke "i32.sle.double.negation" (i32.const 1) (i32.const 0))
+    (i32.const 0)
+)
+(assert_return
+    (invoke "i32.sle.double.negation" (i32.const 1) (i32.const 1))
+    (i32.const 1)
+)
