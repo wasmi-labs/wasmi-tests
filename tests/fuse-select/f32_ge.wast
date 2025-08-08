@@ -26,6 +26,14 @@
     (invoke "fused(f32.ge,select)" (f32.const 1) (f32.const 1))
     (i32.const 10)
 )
+(assert_return
+    (invoke "fused(f32.ge,select)" (f32.const nan) (f32.const 1))
+    (i32.const 20)
+)
+(assert_return
+    (invoke "fused(f32.ge,select)" (f32.const 1) (f32.const nan))
+    (i32.const 20)
+)
 
 (module
     (func (export "fused(f32.ge,i32.eqz,select)") (param f32 f32) (result i32)
@@ -56,6 +64,14 @@
 (assert_return
     (invoke "fused(f32.ge,i32.eqz,select)" (f32.const 1) (f32.const 1))
     (i32.const 20)
+)
+(assert_return
+    (invoke "fused(f32.ge,i32.eqz,select)" (f32.const nan) (f32.const 1))
+    (i32.const 10)
+)
+(assert_return
+    (invoke "fused(f32.ge,i32.eqz,select)" (f32.const 1) (f32.const nan))
+    (i32.const 10)
 )
 
 (module
@@ -90,6 +106,14 @@
     (invoke "fused(f32.ge,i32.eqz,i32.eqz,select)" (f32.const 1) (f32.const 1))
     (i32.const 10)
 )
+(assert_return
+    (invoke "fused(f32.ge,i32.eqz,i32.eqz,select)" (f32.const nan) (f32.const 1))
+    (i32.const 20)
+)
+(assert_return
+    (invoke "fused(f32.ge,i32.eqz,i32.eqz,select)" (f32.const 1) (f32.const nan))
+    (i32.const 20)
+)
 
 (module
     (func (export "fused(f32.ge,i32.nez,select)") (param f32 f32) (result i32)
@@ -121,4 +145,12 @@
 (assert_return
     (invoke "fused(f32.ge,i32.nez,select)" (f32.const 1) (f32.const 1))
     (i32.const 10)
+)
+(assert_return
+    (invoke "fused(f32.ge,i32.nez,select)" (f32.const nan) (f32.const 1))
+    (i32.const 20)
+)
+(assert_return
+    (invoke "fused(f32.ge,i32.nez,select)" (f32.const 1) (f32.const nan))
+    (i32.const 20)
 )
