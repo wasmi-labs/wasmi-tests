@@ -324,3 +324,81 @@
 (assert_return (invoke "is-odd" (i32.const 7)) (i32.const 1))
 (assert_return (invoke "is-odd" (i32.const 8)) (i32.const 0))
 (assert_return (invoke "is-odd" (i32.const 9)) (i32.const 1))
+
+;; The exported functions call the imported identity host functions `n` times.
+;; The host functions are supposed to be identity functions with fixed arity.
+;;
+;; After successful execution the exported functions returns 0.
+(module
+    (import "wasmitest" "identity-0" (func $identity-0))
+    (import "wasmitest" "identity-1" (func $identity-1 (param i64) (result i64)))
+    (import "wasmitest" "identity-2" (func $identity-2 (param i64 i64) (result i64 i64)))
+
+    (func $forward-identity-0
+        (return_call $identity-0)
+    )
+    (func $forward-identity-1 (param i64) (result i64)
+        (return_call $identity-1 (local.get 0))
+    )
+    (func $forward-identity-2 (param i64 i64) (result i64 i64)
+        (return_call $identity-2 (local.get 0) (local.get 1))
+    )
+
+    (func (export "n-times-identity-0") (param $n i64) (result i64)
+        (loop $continue
+            (if
+                (i64.eqz (local.get $n))
+                (then
+                    (return (i64.const 0))
+                )
+            )
+            (call $forward-identity-0)
+            (local.set $n (i64.sub (local.get $n) (i64.const 1)))
+            (br $continue)
+        )
+        (unreachable)
+    )
+
+    (func (export "n-times-identity-1") (param $n i64) (result i64)
+        (loop $continue
+            (if
+                (i64.eqz (local.get $n))
+                (then
+                    (return (i64.const 0))
+                )
+            )
+            (drop (call $forward-identity-1 (local.get $n)))
+            (local.set $n (i64.sub (local.get $n) (i64.const 1)))
+            (br $continue)
+        )
+        (unreachable)
+    )
+
+    (func (export "n-times-identity-2") (param $n i64) (result i64)
+        (loop $continue
+            (if
+                (i64.eqz (local.get $n))
+                (then
+                    (return (i64.const 0))
+                )
+            )
+            (call $forward-identity-2
+                (local.get $n) (local.get $n)
+            )
+            ;; drop all return values from the host function call
+            (drop) (drop)
+            (local.set $n (i64.sub (local.get $n) (i64.const 1)))
+            (br $continue)
+        )
+        (unreachable)
+    )
+)
+(assert_return (invoke "n-times-identity-0" (i64.const  0)) (i64.const 0))
+(assert_return (invoke "n-times-identity-0" (i64.const  1)) (i64.const 0))
+(assert_return (invoke "n-times-identity-0" (i64.const 10)) (i64.const 0))
+(assert_return (invoke "n-times-identity-1" (i64.const  0)) (i64.const 0))
+(assert_return (invoke "n-times-identity-1" (i64.const  1)) (i64.const 0))
+(assert_return (invoke "n-times-identity-1" (i64.const 10)) (i64.const 0))
+(assert_return (invoke "n-times-identity-2" (i64.const  0)) (i64.const 0))
+(assert_return (invoke "n-times-identity-2" (i64.const  1)) (i64.const 0))
+(assert_return (invoke "n-times-identity-2" (i64.const 10)) (i64.const 0))
