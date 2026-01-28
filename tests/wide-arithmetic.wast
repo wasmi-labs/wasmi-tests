@@ -140,3 +140,43 @@
     (i64.const -1)
     (i64.const 0)
 )
+
+(module
+    (func (export "regression-#1762-add") (param i64) (result i64 i64)
+        (local i64 i64)
+        (i64.add128
+            (local.get 0)
+            (i64.const 0)
+            (i64.const 0)
+            (i64.const 1)
+        )
+        (local.set 1) ;; set hi bits
+        (local.set 2) ;; set lo bits
+        (local.get 2)
+        (local.get 1)
+    )
+)
+(assert_return
+    (invoke "regression-#1762-add" (i64.const 42))
+    (i64.const 42) (i64.const 1)
+)
+
+(module
+    (func (export "regression-#1762-sub") (param i64) (result i64 i64)
+        (local i64 i64)
+        (i64.sub128
+            (local.get 0)
+            (i64.const 0)
+            (i64.const 0)
+            (i64.const 1)
+        )
+        (local.set 1) ;; set hi bits
+        (local.set 2) ;; set lo bits
+        (local.get 2)
+        (local.get 1)
+    )
+)
+(assert_return
+    (invoke "regression-#1762-sub" (i64.const 42))
+    (i64.const 42) (i64.const -1)
+)
