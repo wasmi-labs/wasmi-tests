@@ -5,7 +5,7 @@
             (local.get 0)
             (loop $continue (param i32)
                 (local.get 0)
-                br_table $continue $exit $continue
+                (br_table $continue $exit $continue)
             )
             (unreachable)
         )
