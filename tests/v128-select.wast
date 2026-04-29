@@ -1,0 +1,11 @@
+(module
+  (func (export "v128_select") (param i32) (result v128)
+    (select (result v128)
+      (v128.const i64x2 0x1111111111111111 0x2222222222222222)
+      (v128.const i64x2 0x3333333333333333 0x4444444444444444)
+      (local.get 0)
+    )
+  )
+)
+(assert_return (invoke "v128_select" (i32.const 1)) (v128.const i64x2 0x1111111111111111 0x2222222222222222))
+(assert_return (invoke "v128_select" (i32.const 0)) (v128.const i64x2 0x3333333333333333 0x4444444444444444))
