@@ -248,3 +248,22 @@
     (invoke "expr.if.rhs" (i32.const 1) (i32.const 5) (i32.const 7) (i32.const 11))
     (i32.const 16)
 )
+
+(module
+    (global (mut i64) i64.const 0)
+    (func (export "preserve-reg-backed-local") (param i64 i64) (result i64)
+        local.get 0
+        local.get 1
+        i64.add
+        local.tee 1
+        block ;; preserves register-backed local on the stack
+        end
+        global.get 0
+        i64.add ;; bailed with invalid (reg,reg) inputs
+    )
+)
+
+(assert_return
+    (invoke "preserve-reg-backed-local" (i64.const 1) (i64.const 2))
+    (i64.const 3)
+)
