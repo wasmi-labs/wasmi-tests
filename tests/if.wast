@@ -61,3 +61,31 @@
     (invoke "if.apply-and-conditionally-drop" (i32.const 1) (i32.const 10) (i32.const 20))
     (i32.const 20)
 )
+
+(module
+    ;; This is a regression test that failed because copying `then` branch
+    ;; results to the `if` results was incorrectly not avoided due to bugs in
+    ;; `copy_many_strip_noop_start` and `copy_many_strip_noop_end` in that it
+    ;; wasn't accounted for `v128` values taking 2 slots.
+    (func (export "avoid-copy-then-results") (param i32) (result v128 i32)
+        (if (result v128 i32)
+            (local.get 0)
+            (then
+                (if (result v128 i32)
+                    (local.get 0)
+                    (then
+                        (v128.const i32x4 1 2 3 4)
+                        (i32.const 0)
+                    )
+                    (else (unreachable))
+                )
+            )
+            (else (unreachable))
+        )
+    )
+)
+(assert_return
+    (invoke "avoid-copy-then-results" (i32.const 1))
+    (v128.const i32x4 1 2 3 4)
+    (i32.const 0)
+)
