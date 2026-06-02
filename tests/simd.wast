@@ -115,3 +115,20 @@
     (invoke "i64x2.shr_u(x,63)" (v128.const i32x4 0 0 0 0xFF))
     (v128.const i64x2 0 0)
 )
+
+(module
+    ;; This resulted in `pop from empty stack` error in Wasmi at some time.
+    ;; The reason was that `select`'s condition was a constant, thus was optimized
+    ;; away by Wasmi. The copy of the selected operand was no-op and due to incorrect
+    ;; logic the stack for the selected result was popped.
+    (func
+        (local i64 v128)
+        (drop
+            (select
+                (i64x2.splat (local.get 0))
+                (v128.const i64x2 0 0)
+                (i32.const 1)
+            )
+        )
+    )
+)
