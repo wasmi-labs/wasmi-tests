@@ -118,3 +118,24 @@
     (invoke "regression.1" (i64.const 2))
     "unreachable"
 )
+
+(module
+    (func (export "if.restore.regs") (param $c i32) (result i32)
+    (local $x i32)
+    (local.set $x (i32.add (local.get $c) (i32.const 1))) ;; ireg = $x, link Local($x)
+    (if
+        (local.get $c) ;; slot condition → does NOT clobber ireg
+        (then
+            (drop (i32.add (local.get $c) (i32.const 10)))  ;; then clobbers ireg = c+7
+        )
+    )
+    (local.get $x)) ;; leaked link → reads ireg; on the then path ireg = c+7, not $x
+)
+(assert_return
+    (invoke "if.restore.regs" (i32.const 0))
+    (i32.const 1)
+)
+(assert_return
+    (invoke "if.restore.regs" (i32.const 1))
+    (i32.const 2)
+)
