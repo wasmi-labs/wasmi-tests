@@ -222,3 +222,16 @@
     (invoke "condition-reg(i32)-overwrite.loop" (i32.const 1))
     (i32.const 10)
 )
+
+(module
+    (func (export "if-else.reg-result.i32") (param i32) (result i32)
+        (i32.const 1)
+        (if (param i32) (result i32)
+            (local.get 0)
+            (then (i32.add (i32.const 10))) ;; 1, lives in accumulator
+            (else (i32.add (i32.const 20))) ;; 1, lives in accumulator
+        )
+    )
+)
+(assert_return (invoke "if-else.reg-result.i32" (i32.const 1)) (i32.const 11))
+(assert_return (invoke "if-else.reg-result.i32" (i32.const 0)) (i32.const 21))
