@@ -139,3 +139,24 @@
     (invoke "if.restore.regs" (i32.const 1))
     (i32.const 2)
 )
+
+(module
+    (global (mut i32) (i32.const 100))
+    (func (export "then.reg-overwrite") (result i32)
+        (if (result i32)
+            (i32.const 1) ;; if condition
+            (then
+                (global.get 0)
+            )
+            (else
+                (i32.const -5)
+            )
+        )
+        (global.get 0)
+        (i32.xor)
+    )
+)
+(assert_return
+    (invoke "then.reg-overwrite")
+    (i32.const 0)
+)
