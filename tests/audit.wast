@@ -160,3 +160,15 @@
     (invoke "then.reg-overwrite")
     (i32.const 0)
 )
+
+(module
+    (func (export "loop.branch-params-overwrite-temp-regs") (param i32) (result i32)
+        (i32.add (local.get 0) (i32.const 10))
+        (i32.const 20)
+        (loop (param i32) (drop))
+    )
+)
+(assert_return
+    (invoke "loop.branch-params-overwrite-temp-regs" (i32.const 0))
+    (i32.const 10)
+)
