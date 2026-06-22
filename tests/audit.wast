@@ -181,3 +181,23 @@
         (br_if 0)
     )
 )
+
+(module
+    (func (export "isub-to-iadd-underflow") (param i64) (result i64)
+        local.get 0
+        i64.const -9223372036854775808 ;; i64::MIN
+        i64.sub
+    )
+)
+(assert_return
+    (invoke "isub-to-iadd-underflow" (i64.const -9223372036854775808)) ;; i64::MIN
+    (i64.const 0)
+)
+(assert_return
+    (invoke "isub-to-iadd-underflow" (i64.const 0))
+    (i64.const -9223372036854775808)
+)
+(assert_return
+    (invoke "isub-to-iadd-underflow" (i64.const 9223372036854775807)) ;; i64::MAX
+    (i64.const -1)
+)
