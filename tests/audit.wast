@@ -172,3 +172,12 @@
     (invoke "loop.branch-params-overwrite-temp-regs" (i32.const 0))
     (i32.const 10)
 )
+
+(module
+    (func (export "dropped-staged-op-is-fused") (param f32 i32)
+        (local.set 1 (i32.add (local.get 1) (i32.const 1)))
+        (drop (f32.abs (local.get 0)))
+        (local.get 1)
+        (br_if 0)
+    )
+)
