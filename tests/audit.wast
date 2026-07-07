@@ -201,3 +201,18 @@
     (invoke "isub-to-iadd-underflow" (i64.const 9223372036854775807)) ;; i64::MAX
     (i64.const -1)
 )
+
+(module
+    (memory 1 1)
+    (func (export "unfused_load32x4_u") (param i32)
+        i32.const 65536
+        local.get 0
+        v128.load32x2_u offset=36 align=2
+        v128.store64_lane offset=35 align=2 1
+        unreachable
+    )
+)
+(assert_trap
+    (invoke "unfused_load32x4_u" (i32.const 0))
+    "out of bounds memory access"
+)
