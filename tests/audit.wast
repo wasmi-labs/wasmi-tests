@@ -216,3 +216,20 @@
     (invoke "unfused_load32x4_u" (i32.const 0))
     "out of bounds memory access"
 )
+
+(module
+    (memory 1 1)
+    (func (export "unfused_load32_lane") (param i32) (result i32)
+        f32.const 1
+        local.get 0
+        local.get 0
+        v128.const i32x4 0xaaaaaaaa 0xbbbbbbbb 0xcccccccc 0xdddddddd
+        v128.load32_lane 0
+        v128.store8_lane 5
+        i32.reinterpret_f32
+    )
+)
+(assert_return
+    (invoke "unfused_load32_lane" (i32.const 0))
+    (i32.const 0x3f800000)
+)
