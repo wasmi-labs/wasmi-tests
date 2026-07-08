@@ -246,3 +246,22 @@
     (invoke "foo" (i64.const 66000))
     "out of bounds memory access"
 )
+
+(module
+    (func (export "br_table.multi-value.overwrite") (param i32) (result i64 i64)
+        (i64.const 10)
+        (block (result i64 i64)
+            (i64.const 11)
+            (i64.const 22)
+            (local.get 0)
+            (br_table 0 1 0)
+        )
+        (drop)
+        (drop)
+        (i64.const 20)
+    )
+)
+(assert_return
+    (invoke "br_table.multi-value.overwrite" (i32.const 1))
+    (i64.const 11) (i64.const 22)
+)
