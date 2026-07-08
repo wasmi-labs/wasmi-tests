@@ -265,3 +265,15 @@
     (invoke "br_table.multi-value.overwrite" (i32.const 1))
     (i64.const 11) (i64.const 22)
 )
+
+(module
+    (func (export "") (param v128 i32)
+        local.get 0
+        i16x8.bitmask
+        local.tee 1
+        f64.convert_i32_s
+        local.get 1
+        br_if 0
+        unreachable
+    )
+)
