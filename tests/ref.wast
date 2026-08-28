@@ -8,6 +8,7 @@
 )
 
 (assert_return (invoke "func") (ref.func))
+(assert_return (invoke "func") (ref.func $f))
 (assert_return (invoke "null-func") (ref.null))
 (assert_return (invoke "null-func") (ref.null func))
 (assert_return (invoke "null-extern") (ref.null))
