@@ -1,0 +1,16 @@
+(module
+    (func $f)
+    (elem declare func $f)
+    (func (export "func") (result funcref) (ref.func $f))
+    (func (export "null-func") (result funcref) (ref.null func))
+    (func (export "null-extern") (result externref) (ref.null extern))
+    (func (export "extern") (param externref) (result externref) (local.get 0))
+)
+
+(assert_return (invoke "func") (ref.func))
+(assert_return (invoke "null-func") (ref.null))
+(assert_return (invoke "null-func") (ref.null func))
+(assert_return (invoke "null-extern") (ref.null))
+(assert_return (invoke "null-extern") (ref.null extern))
+(assert_return (invoke "extern" (ref.extern 1)) (ref.extern))
+(assert_return (invoke "extern" (ref.extern 1)) (ref.extern 1))
