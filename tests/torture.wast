@@ -8,15 +8,13 @@
 ;; Wasm operators. A Wasm `loop` keeps Wasmi's own value/call stack flat, so a non-tail-calling handler
 ;; in the body grows only the *native* stack. With a reduced `RUST_MIN_STACK` even a small per-op leak
 ;; overflows quickly. If every handler tail-calls correctly the loops complete and the asserts pass.
-;;
-;; NOTE: `memory.grow` and `table.grow` are deliberately excluded -- they are the known stable-only
-;; residual non-tail handlers (see issue #1942). Add them here once they are made tail-callable.
 
 (module
-  (memory $mem 1)
+  (memory $mem 1 1)
 
   (table $t 8 funcref)
   (table $te 4 externref)
+  (table $tg 1 1 funcref)
 
   (global $gi32 (mut i32) (i32.const 1))
   (global $gi64 (mut i64) (i64.const 1))
@@ -322,6 +320,19 @@
     )
   )
 
+  ;; ---- linear memory: grow -------------------------------------------------
+  (func (export "torture_memory_grow")
+    (local $i i32) (local $z i32) (local $a i32)
+    (local.set $i (i32.const 100000))
+    (loop $l
+      ;; `$mem` is fixed size: growing by 1 is refused while growing by 0 succeeds.
+      (local.set $a (memory.grow (i32.const 1)))
+      (local.set $a (memory.grow (local.get $z)))
+      (local.set $i (i32.sub (local.get $i) (i32.const 1)))
+      (br_if $l (local.get $i))
+    )
+  )
+
   ;; ---- tables: get ----------------------------------------------------------
   (func (export "torture_table_get")
     (local $i i32) (local $r funcref) (local $e externref)
@@ -389,6 +400,19 @@
     (loop $l
       (table.init $t $epassive (local.get $z) (local.get $z) (local.get $z))
       (elem.drop $epassive)
+      (local.set $i (i32.sub (local.get $i) (i32.const 1)))
+      (br_if $l (local.get $i))
+    )
+  )
+
+  ;; ---- tables: grow ---------------------------------------------------------
+  (func (export "torture_table_grow")
+    (local $i i32) (local $z i32) (local $a i32)
+    (local.set $i (i32.const 100000))
+    (loop $l
+      ;; `$tg` is fixed size: growing by 1 is refused while growing by 0 succeeds.
+      (local.set $a (table.grow $tg (ref.null func) (i32.const 1)))
+      (local.set $a (table.grow $tg (ref.null func) (local.get $z)))
       (local.set $i (i32.sub (local.get $i) (i32.const 1)))
       (br_if $l (local.get $i))
     )
@@ -742,12 +766,14 @@
 (assert_return (invoke "torture_memory_copy"))
 (assert_return (invoke "torture_memory_fill"))
 (assert_return (invoke "torture_memory_init"))
+(assert_return (invoke "torture_memory_grow"))
 (assert_return (invoke "torture_table_get"))
 (assert_return (invoke "torture_table_set"))
 (assert_return (invoke "torture_table_size"))
 (assert_return (invoke "torture_table_copy"))
 (assert_return (invoke "torture_table_fill"))
 (assert_return (invoke "torture_table_init"))
+(assert_return (invoke "torture_table_grow"))
 (assert_return (invoke "torture_ref"))
 (assert_return (invoke "torture_global_get"))
 (assert_return (invoke "torture_global_set"))
