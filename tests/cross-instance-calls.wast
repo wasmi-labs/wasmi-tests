@@ -421,3 +421,62 @@
 (assert_return (invoke $return_call_indirect-C "own-global-after-multi-hop") (i32.const 3))
 (assert_return (invoke $return_call_indirect-C "own-global-roundtrip") (i32.const 42))
 (assert_return (invoke $return_call_indirect-C "own-global-after-indirect-entry") (i32.const 3))
+
+;; ---------------------------------------------------------------------------
+;; Partial instantiation
+;;
+;; Active segments applied before a failing one persist, so functions of a
+;; failed instantiation may escape via a shared table. Calling them must use
+;; their fully initialized instance: its globals, memories and functions.
+;; ---------------------------------------------------------------------------
+
+(module $partial-T
+    (type $ret-i32 (func (result i32)))
+    (table (export "tab") 10 funcref)
+    (func (export "call") (param i32) (result i32)
+        (call_indirect (type $ret-i32) (local.get 0))
+    )
+)
+(register "partial-T" $partial-T)
+
+;; Fails on an element segment: no data segment has been applied.
+(assert_trap
+    (module
+        (table (import "partial-T" "tab") 10 funcref)
+        (memory 1)
+        (global $val i32 (i32.const 40))
+        (func $two (result i32) (i32.const 2))
+        (func $f (result i32)
+            (i32.add
+                (i32.add (global.get $val) (call $two))
+                (i32.load8_u (i32.const 0))
+            )
+        )
+        (elem (i32.const 1) $f)
+        (elem (i32.const 8) $f $f $f) ;; (partially) out of bounds
+        (data (i32.const 0) "\05")
+    )
+    "out of bounds table access"
+)
+(assert_return (invoke $partial-T "call" (i32.const 1)) (i32.const 42))
+
+;; Fails on a data segment after all element segments have been applied.
+(assert_trap
+    (module
+        (table (import "partial-T" "tab") 10 funcref)
+        (memory 1)
+        (global $val i32 (i32.const 10))
+        (func $two (result i32) (i32.const 2))
+        (func $f (result i32)
+            (i32.add
+                (i32.add (global.get $val) (call $two))
+                (i32.load8_u (i32.const 0))
+            )
+        )
+        (elem (i32.const 2) $f)
+        (data (i32.const 0) "\05")
+        (data (i32.const 65535) "zz") ;; (partially) out of bounds
+    )
+    "out of bounds memory access"
+)
+(assert_return (invoke $partial-T "call" (i32.const 2)) (i32.const 17))
