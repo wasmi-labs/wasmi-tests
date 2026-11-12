@@ -267,3 +267,53 @@
     (invoke "preserve-reg-backed-local" (i64.const 1) (i64.const 2))
     (i64.const 3)
 )
+
+;; Regression test for https://github.com/wasmi-labs/wasmi/issues/2074
+;;
+;; Note: every invocation uses distinct values so that a clobbered or
+;;       uninitialized operand cannot accidentally match a stale value.
+(module
+    (func (export "if.imm-param") (param i32 i32) (result i32)
+        local.get 0
+        i32.const 1
+        local.get 1
+        if (param i32)
+            drop
+        else
+            local.set 0
+        end
+    )
+    (func (export "block.imm-param") (param i32 i32) (result i32)
+        local.get 0
+        i32.const 1
+        block (param i32) (result i32)
+            local.get 1
+            br_if 0
+            local.set 0
+            i32.const 0
+        end
+        drop
+    )
+    (func (export "loop.imm-param") (param i32) (result i32)
+        local.get 0
+        i32.const 1
+        loop (param i32)
+            local.set 0
+            local.get 0
+            i32.const 1
+            i32.add
+            local.get 0
+            i32.const 3
+            i32.lt_u
+            br_if 0
+            drop
+        end
+    )
+)
+(assert_return (invoke "if.imm-param" (i32.const 11) (i32.const 1)) (i32.const 11))
+(assert_return (invoke "if.imm-param" (i32.const 13) (i32.const 0)) (i32.const 13))
+(assert_return (invoke "if.imm-param" (i32.const 17) (i32.const 1)) (i32.const 17))
+(assert_return (invoke "block.imm-param" (i32.const 19) (i32.const 1)) (i32.const 19))
+(assert_return (invoke "block.imm-param" (i32.const 23) (i32.const 0)) (i32.const 23))
+(assert_return (invoke "block.imm-param" (i32.const 29) (i32.const 1)) (i32.const 29))
+(assert_return (invoke "loop.imm-param" (i32.const 31)) (i32.const 31))
